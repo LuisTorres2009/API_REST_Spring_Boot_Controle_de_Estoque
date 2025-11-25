@@ -3,6 +3,8 @@ package com.controleestoque.api_estoque.model;
 import jakarta.persistence.*;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table(name = "tb_fornecedores")
 public class Fornecedor {
@@ -17,6 +19,7 @@ public class Fornecedor {
     // Mapeamento: Lado não dominante relacionado em Produto.
     // Produto que indica que o mapeamento da tabela de junção está na classe Produto.
     @ManyToMany(mappedBy = "fornecedores")
+    @JsonIgnore
     private Set<Produto> produtos;
 
     // --- Construtores, Getters e Setters ---

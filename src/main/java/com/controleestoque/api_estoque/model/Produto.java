@@ -3,6 +3,8 @@ package com.controleestoque.api_estoque.model;
 import java.math.BigDecimal;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.*;
 
 @Entity
@@ -11,49 +13,50 @@ public class Produto {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // Chave primária.
+    private Long id;
 
     private String nome;
 
     private BigDecimal preco;
 
-    // Relacionamento 1:1 (One-to-One)
-    // Mapeamento: Um produto tem UM registro de estoque (e vice-versa).
-    // Cascade.ALL: Operações com o estoque serão refletidas na classe Estoque.
-    // mappedBy="produto" = cascade = CascadeType.ALL, orphanRemoval = true
+    // Relacionamento 1:1 com Estoque
     @OneToOne(mappedBy = "produto", cascade = CascadeType.ALL, orphanRemoval = true)
     private Estoque estoque;
 
-    // Relacionamento N:1 (Many-to-One)
-    // Mapeamento: Muitos produtos têm UMA categoria.
-    // LAZY = Carregamento lento. Só carrega a chave estrangeira (FK).
-    @ManyToOne(fetch = FetchType.LAZY) // LAZY: Carrega a categoria apenas quando for solicitada.
-    @JoinColumn(name = "categoria_id", nullable = false) // Define a FK na tabela produto.
+    // Relacionamento N:1 com Categoria
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "categoria_id", nullable = false)
     private Categoria categoria;
 
-    // --- Relacionamento N:M (Many-to-Many) ----
-    // Mapeamento: Muitos produtos tem MUITOS fornecedores (e vice-versa).
-    // Define a tabela intermediária tb_produto_fornecedor e as colunas de união.
+    // Relacionamento N:M com Fornecedores
     @ManyToMany
     @JoinTable(
-        name = "tb_produto_fornecedor", // Nome da tabela de junção
-        joinColumns = @JoinColumn(name = "produto_id"), // FK está definida na tabela de junção
-        inverseJoinColumns = @JoinColumn(name = "fornecedor_id") // FK está definida na tabela de junção
+        name = "tb_produto_fornecedor",
+        joinColumns = @JoinColumn(name = "produto_id"),
+        inverseJoinColumns = @JoinColumn(name = "fornecedor_id")
     )
     private Set<Fornecedor> fornecedores;
 
-    // Construtores, Getters e Setters...
+    // NOVO: Relacionamento 1:n com ItensVenda
+    @OneToMany(mappedBy = "produto")
+    @JsonIgnore
+    private Set<ItemVenda> itensVenda; // É importante inicializar esta coleção para evitar NullPointerException
+
+    // Construtores
     public Produto(){}
 
+    // Construtor completo (Atualizado para incluir itensVenda)
     public Produto(String nome, BigDecimal preco, Estoque estoque, Categoria categoria,
-                   Set<Fornecedor> fornecedores) {
+                   Set<Fornecedor> fornecedores, Set<ItemVenda> itensVenda) {
         this.nome = nome;
         this.preco = preco;
         this.estoque = estoque;
         this.categoria = categoria;
         this.fornecedores = fornecedores;
+        this.itensVenda = itensVenda; // Novo campo
     }
 
+    // Getters e Setters (Certifique-se de que estes estejam incluídos)
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getNome() { return nome; }
@@ -66,4 +69,8 @@ public class Produto {
     public void setCategoria(Categoria categoria) { this.categoria = categoria; }
     public Set<Fornecedor> getFornecedores() { return fornecedores; }
     public void setFornecedores(Set<Fornecedor> fornecedores) { this.fornecedores = fornecedores;}
+    
+    // Getter e Setter para o novo campo
+    public Set<ItemVenda> getItensVenda() { return itensVenda; }
+    public void setItensVenda(Set<ItemVenda> itensVenda) { this.itensVenda = itensVenda;} 
 }
