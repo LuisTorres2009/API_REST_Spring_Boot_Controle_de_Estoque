@@ -27,13 +27,15 @@ public class ProdutoController {
     // GET /api/produtos
     @GetMapping
     public List<Produto> getAllProdutos() {
-        return produtoRepository.findAll();
+        // CORREÇÃO: Usando JOIN FETCH para carregar a categoria na listagem (resolve o null)
+        return produtoRepository.findAllWithCategoria();
     }
 
     // GET /api/produtos/{id}
     @GetMapping("/{id}")
-    public ResponseEntity<Produto> getProdutoById(@PathVariable Long id) { // Nome do método corrigido
-        return produtoRepository.findById(id)
+    public ResponseEntity<Produto> getProdutoById(@PathVariable Long id) {
+        // CORREÇÃO: Usando JOIN FETCH para carregar a categoria no detalhe (resolve o null)
+        return produtoRepository.findByIdWithCategoria(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -48,14 +50,12 @@ public class ProdutoController {
             return ResponseEntity.badRequest().body(null); // 400 Bad Request
         }
 
-        produto.getCategoria().setId(produto.getCategoria().getId()); // Garante o ID no objeto Categoria
+        produto.getCategoria().setId(produto.getCategoria().getId());
         categoriaRepository.findById(produto.getCategoria().getId())
                 .ifPresent(produto::setCategoria);
 
-        // 2. LIGAÇÃO BIDIRECIONAL DO ESTOQUE (ALTERAÇÃO CRUCIAL)
-        // Se o Estoque vier no payload, precisamos ligá-lo de volta ao Produto
+        // 2. LIGAÇÃO BIDIRECIONAL DO ESTOQUE
         if (produto.getEstoque() != null) {
-            // O Produto é o lado 'proprietário' da FK no Estoque (JoinColumn no Estoque)
             produto.getEstoque().setProduto(produto); 
         }
 
@@ -63,18 +63,15 @@ public class ProdutoController {
         if (produto.getFornecedores() != null && !produto.getFornecedores().isEmpty()) {
             Set<Fornecedor> fornecedoresEncontrados = new HashSet<>();
             
-            // Busca cada fornecedor pelo ID e adiciona à nova coleção
             for (Fornecedor f : produto.getFornecedores()) {
                  fornecedorRepository.findById(f.getId())
                          .ifPresent(fornecedoresEncontrados::add);
             }
             
-            // Substitui a coleção com as instâncias gerenciadas pelo JPA
             produto.setFornecedores(fornecedoresEncontrados);
         }
 
         // 4. Salva o produto
-        // Devido ao CascadeType.ALL em Produto->Estoque, salvar o Produto salva o Estoque também.
         Produto savedProduto = produtoRepository.save(produto);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedProduto);
     }
@@ -83,8 +80,6 @@ public class ProdutoController {
     @PutMapping("/{id}")
     public ResponseEntity<Produto> updateProduto( @PathVariable Long id, @RequestBody Produto produtoDetails) {
         
-        // Esta implementação básica apenas atualiza o nome. Para um PUT completo, 
-        // você precisaria implementar a lógica de atualização da Categoria, Estoque, e Fornecedores.
         return produtoRepository.findById(id)
                 .map(produto -> {
                     produto.setNome(produtoDetails.getNome());
