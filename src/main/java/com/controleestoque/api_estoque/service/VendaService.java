@@ -3,8 +3,8 @@ package com.controleestoque.api_estoque.service;
 import com.controleestoque.api_estoque.model.*;
 import com.controleestoque.api_estoque.repository.*;
 import com.controleestoque.api_estoque.exception.EstoqueInsuficienteException;
-import com.controleestoque.api_estoque.dto.VendaRequestDTO; // Vamos criar este DTO
-import com.controleestoque.api_estoque.dto.ItemVendaDTO; // Vamos criar este DTO
+import com.controleestoque.api_estoque.dto.VendaRequestDTO;
+import com.controleestoque.api_estoque.dto.ItemVendaDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +19,7 @@ public class VendaService {
     private final VendaRepository vendaRepository;
     private final ClienteRepository clienteRepository;
     private final ProdutoRepository produtoRepository;
-    private final EstoqueRepository estoqueRepository; // Usaremos para salvar a baixa
+    private final EstoqueRepository estoqueRepository;
 
     @Transactional // GARANTE O ROLLBACK EM CASO DE EXCEÇÃO!
     public Venda registrarVenda(VendaRequestDTO vendaRequestDTO) {
